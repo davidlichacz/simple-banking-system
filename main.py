@@ -7,6 +7,20 @@ IIN = '400000'
 
 session_accounts = {}
 
+def luhn(num):
+    """
+    Calculates a checksum digit using the Luhn algorithm.
+    :param num: any positive integer passed as a string
+    :return: the checksum digit calculated with the Luhn algorithm.
+    """
+    num_list = list(num)
+    step_one = [2 * int(num_list[n]) if n % 2 == 0 else int(num_list[n]) for n in range(len(num_list))]
+    step_two = [step_one[n] - 9 if step_one[n] > 9 else step_one[n] for n in range(len(step_one))]
+    if sum(step_two) % 10 == 0:
+        return '0'
+    else:
+        return str(10 - (sum(step_two) % 10))
+
 
 class Account:
     def __init__(self):
@@ -16,7 +30,7 @@ class Account:
 
     def get_card_number(self):
         account_number = '%09d' % randint(0, 999999999)
-        checksum = str(randint(0, 9))
+        checksum = luhn(IIN + account_number)
         self.card_number = IIN + account_number + checksum
 
     def get_pin(self):
