@@ -9,7 +9,13 @@ Once the program starts, you should print the menu:
 2. Log into account
 0. Exit
 
-If the customer chooses ‘Create an account’, you should generate a new card number which satisfies all the conditions described above. Then you should generate a PIN code that belongs to the generated card number. A PIN code is a sequence of any 4 digits. PIN should be generated in a range from 0000 to 9999.
+If the customer chooses ‘Create an account’, you should generate a new card number which satisfies these conditions: 
+- Number is 16 digits long
+- First six digits are 400000
+- Last digit is determined by the Luhn algorithm
+- All other digits are randomly generated
+
+Then you should generate a PIN code that belongs to the generated card number. A PIN code is a sequence of any 4 digits. PIN should be generated in a range from 0000 to 9999.
 
 If the customer chooses ‘Log into account’, you should ask them to enter their card information. Your program should store all generated data until it is terminated so that a user is able to log into any of the created accounts by a card number and its pin. You can use an array to store the information.
 
