@@ -1,4 +1,18 @@
 from random import randint
+import sqlite3
+
+conn = sqlite3.connect('card.s3db')
+
+create_cards_table = '''CREATE TABLE IF NOT EXISTS card(
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            number TEXT,
+                            pin TEXT,
+                            balance INTEGER DEFAULT 0
+                        )'''
+
+cur = conn.cursor()
+cur.execute(create_cards_table)
+conn.commit()
 
 intro_message = ['1. Create an account', '2. Log into account', '0. Exit']
 options_message = ['1. Balance', '2. Log out', '0. Exit']
@@ -7,11 +21,13 @@ IIN = '400000'
 
 session_accounts = {}
 
+
 def luhn(num):
     """
     Calculates a checksum digit using the Luhn algorithm.
+    :rtype: str
     :param num: any positive integer passed as a string
-    :return: the checksum digit calculated with the Luhn algorithm.
+    :return: a string representing the checksum digit calculated with the Luhn algorithm.
     """
     num_list = list(num)
     step_one = [2 * int(num_list[n]) if n % 2 == 0 else int(num_list[n]) for n in range(len(num_list))]
@@ -54,6 +70,11 @@ while continue_session:
         print(new_account.card_number)
         print('Your card PIN:')
         print(new_account.PIN)
+
+        insert_card = f'INSERT INTO card(number, pin) VALUES ("{new_account.card_number}", "{new_account.PIN}")'
+
+        cur.execute(insert_card)
+        conn.commit()
 
         continue
 
