@@ -15,11 +15,9 @@ cur.execute(create_cards_table)
 conn.commit()
 
 intro_message = ['1. Create an account', '2. Log into account', '0. Exit']
-options_message = ['1. Balance', '2. Log out', '0. Exit']
+options_message = ['1. Balance', '2. Add income', '3. Do transfer', '4. Close account', '5. Log out', '0. Exit']
 
 IIN = '400000'
-
-session_accounts = {}
 
 
 def luhn(num):
@@ -36,6 +34,16 @@ def luhn(num):
         return '0'
     else:
         return str(10 - (sum(step_two) % 10))
+
+
+def get_balance(card_number):
+    balance_sql = f'SELECT balance FROM card WHERE number = {card_number}'
+    cur.execute(balance_sql)
+    balance_list = cur.fetchall()
+    if balance_list:
+        return balance_list[0][0]
+    else:
+        return None
 
 
 class Account:
@@ -63,8 +71,6 @@ while continue_session:
         new_account.get_card_number()
         new_account.get_pin()
 
-        session_accounts[new_account.card_number] = new_account
-
         print('Your card has been created')
         print('Your card number:')
         print(new_account.card_number)
@@ -84,10 +90,18 @@ while continue_session:
         print('Enter your PIN:')
         entered_PIN = input()
 
-        if entered_card not in session_accounts:
+        cur.execute('SELECT number FROM card')
+        numbers_result = cur.fetchall()
+        numbers = [number[0] for number in numbers_result]
+
+        pin_sql = f'SELECT pin FROM card WHERE number = {entered_card}'
+        cur.execute(pin_sql)
+        pin_result = cur.fetchall()
+
+        if entered_card not in numbers:
             print('Wrong card number or PIN!')
             continue
-        elif session_accounts[entered_card].PIN != entered_PIN:
+        elif pin_result[0][0] != entered_PIN:
             print('Wrong card number or PIN!')
             continue
         else:
@@ -96,11 +110,55 @@ while continue_session:
         while True:
             print(*options_message, sep='\n')
             sub_menu_choice = input()
+            balance = get_balance(entered_card)
 
             if sub_menu_choice == '1':
-                print('Balance: ', session_accounts[entered_card].balance)
+                print('Balance: ', balance)
                 continue
             elif sub_menu_choice == '2':
+                print('Enter income:')
+                income = int(input())
+                income_sql = f'UPDATE card SET balance = {balance + income} WHERE number = {entered_card}'
+                cur.execute(income_sql)
+                conn.commit()
+                print('Income was added!')
+                continue
+            elif sub_menu_choice == '3':
+                print('Transfer')
+                print('Enter card number:')
+                destination = input()
+
+                last_digit = destination[-1]
+                first_digits = destination[:len(destination) - 1]
+
+                if destination == entered_card:
+                    print("You can't transfer money to the same account!")
+                elif last_digit != luhn(first_digits):
+                    print('Probably you made a mistake in the card number. Please try again!')
+                elif destination not in numbers:
+                    print('Such a card does not exist.')
+                else:
+                    print('Enter how much money you want to transfer:')
+                    transfer = int(input())
+                    if transfer > balance:
+                        print('Not enough money!')
+                    else:
+                        balance_destination = get_balance(destination)
+                        source_sql = f'UPDATE card SET balance = {balance - transfer} WHERE number = {entered_card}'
+                        destination_sql = f'UPDATE card SET balance = {balance_destination + transfer} WHERE ' \
+                                          f'number = {destination} '
+                        cur.execute(source_sql)
+                        cur.execute(destination_sql)
+                        conn.commit()
+                        print('Success!')
+                continue
+            elif sub_menu_choice == '4':
+                close_sql = f'DELETE FROM card WHERE number = {entered_card}'
+                cur.execute(close_sql)
+                conn.commit()
+                print('The account has been closed!')
+                break
+            elif sub_menu_choice == '5':
                 print('You have successfully logged out!')
                 break
             elif sub_menu_choice == '0':
